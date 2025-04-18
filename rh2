@@ -1,0 +1,66 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Check if Rayfield is loaded correctly
+if not Rayfield then
+    warn("Failed to load Rayfield library")
+    return
+end
+
+local Window = Rayfield:CreateWindow({
+    Name = "Noob Hub",
+    LoadingTitle = "Noob Script",
+    LoadingSubtitle = "by Sigma",
+    ConfigurationSaving = {
+       Enabled = false,
+       FileName = "Vision Script Hub"
+    },
+    Discord = {
+       Enabled = true,
+       Invite = "GYH92be25Z",
+       RememberJoins = true
+    },
+    KeySystem = false,
+    KeySettings = {
+       Title = "Cracked Script Hub| Key",
+       Subtitle = "Link In Discord Server",
+       Note = "Join Server From Misc Tab",
+       FileName = "BladeBallKey",
+       SaveKey = false,
+       GrabKeyFromSite = false,
+       Key = {"https://pastebin.com/raw/KT2YvsJ8"}
+    }
+})
+
+if not Window then
+    warn("Failed to create window. Please check the Rayfield library or script parameters.")
+    return
+end
+
+local MainTab = Window:CreateTab("Main", nil) -- Title, Image
+local MainSection = MainTab:CreateSection("Useful") -- Changed 'Tab' to 'MainTab'
+
+local Toggle = MainTab:CreateToggle({
+    Name = "Auto Timer ( No quick draw )",
+    CurrentValue = false,
+    Flag = "AT_Toggle",
+    Callback = function(Value)
+        _G.ShootingEnabled = Value -- Store toggle state globally
+
+        if Value then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/kosta5630/RH2/refs/heads/main/Auto%20T"))();
+         end
+    end,
+})
+
+local Toggle = MainTab:CreateToggle({
+    Name = "Auto Timer ( Bronze quick draw )",
+    CurrentValue = false,
+    Flag = "AT1_Toggle",
+    Callback = function(Value)
+        _G.ShootingEnabled = Value -- Store toggle state globally
+
+        if Value then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/kosta5630/RH2/refs/heads/main/Auto%20Timer%20Bronze%20QD"))();
+         end
+    end,
+})
