@@ -6,61 +6,117 @@ if not Rayfield then
     return
 end
 
-local Window = Rayfield:CreateWindow({
-    Name = "Noob Hub",
-    LoadingTitle = "Noob Script",
-    LoadingSubtitle = "by Sigma",
-    ConfigurationSaving = {
-       Enabled = false,
-       FileName = "Vision Script Hub"
-    },
-    Discord = {
-       Enabled = true,
-       Invite = "GYH92be25Z",
-       RememberJoins = true
-    },
-    KeySystem = false,
-    KeySettings = {
-       Title = "Cracked Script Hub| Key",
-       Subtitle = "Link In Discord Server",
-       Note = "Join Server From Misc Tab",
-       FileName = "BladeBallKey",
-       SaveKey = false,
-       GrabKeyFromSite = false,
-       Key = {"https://pastebin.com/raw/KT2YvsJ8"}
-    }
-})
+-- Create window with error handling
+local Window
+local success, err = pcall(function()
+    Window = Rayfield:CreateWindow({
+        Name = "Noob Hub",
+        LoadingTitle = "Noob Script",
+        LoadingSubtitle = "by Sigma",
+        ConfigurationSaving = {
+            Enabled = false,
+            FileName = "Vision Script Hub"
+        },
+        Discord = {
+            Enabled = true,
+            Invite = "GYH92be25Z",
+            RememberJoins = true
+        },
+        KeySystem = false,
+        KeySettings = {
+            Title = "Cracked Script Hub| Key",
+            Subtitle = "Link In Discord Server",
+            Note = "Join Server From Misc Tab",
+            FileName = "BladeBallKey",
+            SaveKey = false,
+            GrabKeyFromSite = false,
+            Key = {"https://pastebin.com/raw/KT2YvsJ8"}
+        }
+    })
+end)
 
-if not Window then
-    warn("Failed to create window. Please check the Rayfield library or script parameters.")
+if not success or not Window then
+    warn("Failed to create window: "..tostring(err))
     return
 end
 
-local MainTab = Window:CreateTab("Main", nil) -- Title, Image
-local MainSection = MainTab:CreateSection("Useful") -- Changed 'Tab' to 'MainTab'
+-- Main Tab
+local MainTab = Window:CreateTab("Main", nil)
+local MainSection = MainTab:CreateSection("Useful")
 
-local Toggle = MainTab:CreateToggle({
-    Name = "Auto Timer ( No quick draw )",
+-- Store loaded scripts to prevent duplicate loading
+local loadedScripts = {
+    NoQuickDraw = false,
+    BronzeQuickDraw = false
+}
+
+-- Auto Timer (No Quick Draw)
+MainTab:CreateToggle({
+    Name = "Auto Timer (No quick draw)",
     CurrentValue = false,
     Flag = "AT_Toggle",
     Callback = function(Value)
-        _G.ShootingEnabled = Value -- Store toggle state globally
-
-        if Value then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/zappzt/ballz/refs/heads/main/time"))();
-         end
+        _G.ShootingEnabled = Value
+        
+        if Value and not loadedScripts.NoQuickDraw then
+            local success, err = pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/zappzt/ballz/refs/heads/main/time", true))()
+                loadedScripts.NoQuickDraw = true
+            end)
+            
+            if not success then
+                warn("Failed to load No Quick Draw script: "..tostring(err))
+                Rayfield:Notify({
+                    Title = "Script Error",
+                    Content = "Failed to load No Quick Draw timer",
+                    Duration = 6.5,
+                    Actions = {
+                        Ignore = {
+                            Name = "Okay",
+                            Callback = function() end
+                        }
+                    }
+                })
+            end
+        end
     end,
 })
 
-local Toggle = MainTab:CreateToggle({
-    Name = "Auto Timer ( Bronze quick draw )",
+-- Auto Timer (Bronze quick draw)
+MainTab:CreateToggle({
+    Name = "Auto Timer (Bronze quick draw)",
     CurrentValue = false,
     Flag = "AT1_Toggle",
     Callback = function(Value)
-        _G.ShootingEnabled = Value -- Store toggle state globally
-
-        if Value then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/kosta5630/RH2/refs/heads/main/Auto%20Timer%20Bronze%20QD"))();
-         end
+        _G.ShootingEnabled = Value
+        
+        if Value and not loadedScripts.BronzeQuickDraw then
+            local success, err = pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/kosta5630/RH2/refs/heads/main/Auto%20Timer%20Bronze%20QD", true))()
+                loadedScripts.BronzeQuickDraw = true
+            end)
+            
+            if not success then
+                warn("Failed to load Bronze Quick Draw script: "..tostring(err))
+                Rayfield:Notify({
+                    Title = "Script Error",
+                    Content = "Failed to load Bronze Quick Draw timer",
+                    Duration = 6.5,
+                    Actions = {
+                        Ignore = {
+                            Name = "Okay",
+                            Callback = function() end
+                        }
+                    }
+                })
+            end
+        end
     end,
 })
+
+-- Cleanup when GUI is closed
+game:GetService("UserInputService").WindowFocusReleased:Connect(function()
+    if Window then
+        _G.ShootingEnabled = false
+    end
+end)
