@@ -47,7 +47,7 @@ local Toggle = MainTab:CreateToggle({
         _G.ShootingEnabled = Value -- Store toggle state globally
 
         if Value then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/kosta5630/RH2/refs/heads/main/Auto%20T"))();
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/zappzt/ballz/refs/heads/main/time"))();
          end
     end,
 })
