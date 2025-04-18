@@ -1,122 +1,226 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- Load Rayfield with proper error handling
+local Rayfield, Window
+local success, err = pcall(function()
+    Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+end)
 
--- Check if Rayfield is loaded correctly
-if not Rayfield then
-    warn("Failed to load Rayfield library")
+if not success or not Rayfield then
+    warn("Failed to load Rayfield library: " .. tostring(err))
     return
 end
 
--- Create window with error handling
-local Window
-local success, err = pcall(function()
-    Window = Rayfield:CreateWindow({
+-- Create main window with configuration
+local function createMainWindow()
+    local windowConfig = {
         Name = "Noob Hub",
         LoadingTitle = "Noob Script",
         LoadingSubtitle = "by Sigma",
         ConfigurationSaving = {
-            Enabled = false,
-            FileName = "Vision Script Hub"
+            Enabled = true,
+            FolderName = "NoobHubConfig",
+            FileName = "Settings"
         },
         Discord = {
             Enabled = true,
             Invite = "GYH92be25Z",
             RememberJoins = true
         },
-        KeySystem = false,
-        KeySettings = {
-            Title = "Cracked Script Hub| Key",
-            Subtitle = "Link In Discord Server",
-            Note = "Join Server From Misc Tab",
-            FileName = "BladeBallKey",
-            SaveKey = false,
-            GrabKeyFromSite = false,
-            Key = {"https://pastebin.com/raw/KT2YvsJ8"}
-        }
-    })
-end)
+        KeySystem = false
+    }
 
-if not success or not Window then
-    warn("Failed to create window: "..tostring(err))
-    return
+    local success, win = pcall(function()
+        return Rayfield:CreateWindow(windowConfig)
+    end)
+
+    if not success or not win then
+        warn("Failed to create window: " .. tostring(win))
+        return nil
+    end
+    return win
 end
 
--- Main Tab
-local MainTab = Window:CreateTab("Main", nil)
-local MainSection = MainTab:CreateSection("Useful")
+Window = createMainWindow()
+if not Window then return end
 
--- Store loaded scripts to prevent duplicate loading
-local loadedScripts = {
-    NoQuickDraw = false,
-    BronzeQuickDraw = false
+-- Default speed values
+local defaultSpeeds = {
+    dribbleSpeed = 16,
+    walkSpeed = 22
 }
 
--- Auto Timer (No Quick Draw)
-MainTab:CreateToggle({
-    Name = "Auto Timer (No quick draw)",
-    CurrentValue = false,
-    Flag = "AT_Toggle",
-    Callback = function(Value)
-        _G.ShootingEnabled = Value
-        
-        if Value and not loadedScripts.NoQuickDraw then
-            local success, err = pcall(function()
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/zappzt/ballz/refs/heads/main/time", true))()
-                loadedScripts.NoQuickDraw = true
-            end)
-            
-            if not success then
-                warn("Failed to load No Quick Draw script: "..tostring(err))
-                Rayfield:Notify({
-                    Title = "Script Error",
-                    Content = "Failed to load No Quick Draw timer",
-                    Duration = 6.5,
-                    Actions = {
-                        Ignore = {
-                            Name = "Okay",
-                            Callback = function() end
-                        }
-                    }
-                })
+-- Load or initialize speed settings
+local speedSettings = {
+    DribbleSpeed = defaultSpeeds.dribbleSpeed,
+    WalkSpeed = defaultSpeeds.walkSpeed
+}
+
+-- Create tabs and sections
+local function setupUI()
+    -- Main Tab
+    local MainTab = Window:CreateTab("Main", nil)
+    MainTab:CreateSection("Auto Timer Settings")
+
+    -- Auto Timer Toggles
+    local timerOptions = {
+        {
+            Name = "Auto Timer (No Quick Draw)",
+            Flag = "AT_Toggle",
+            ScriptUrl = "https://raw.githubusercontent.com/zappzt/ballz/refs/heads/main/time"
+        },
+        {
+            Name = "Auto Timer (Bronze Quick Draw)",
+            Flag = "AT1_Toggle",
+            ScriptUrl = "https://raw.githubusercontent.com/kosta5630/RH2/refs/heads/main/Auto%20Timer%20Bronze%20QD"
+        },
+    }
+
+    -- Create toggles dynamically
+    for _, option in ipairs(timerOptions) do
+        MainTab:CreateToggle({
+            Name = option.Name,
+            CurrentValue = false,
+            Flag = option.Flag,
+            Callback = function(Value)
+                _G.ShootingEnabled = Value
+                
+                if Value then
+                    if not _G.LoadedTimers then _G.LoadedTimers = {} end
+                    if not _G.LoadedTimers[option.Flag] then
+                        local success, err = pcall(function()
+                            loadstring(game:HttpGet(option.ScriptUrl))()
+                            _G.LoadedTimers[option.Flag] = true
+                        end)
+                        if not success then
+                            warn("Failed to load timer script: " .. tostring(err))
+                            Rayfield:Notify({
+                                Title = "Load Error",
+                                Content = "Failed to load " .. option.Name,
+                                Duration = 6.5,
+                                Actions = {
+                                    Ignore = {
+                                        Name = "Okay",
+                                        Callback = function() end
+                                    }
+                                }
+                            })
+                        end
+                    end
+                end
+            end,
+        })
+    end
+
+    -- Speed Configuration Section
+    MainTab:CreateSection("Speed Settings")
+    
+    -- Dribble Speed Slider
+    MainTab:CreateSlider({
+        Name = "Dribble Speed",
+        Range = {10, 30},
+        Increment = 1,
+        Suffix = "studs",
+        CurrentValue = speedSettings.DribbleSpeed,
+        Flag = "DribbleSpeed",
+        Callback = function(Value)
+            speedSettings.DribbleSpeed = Value
+            applySpeedSettings()
+        end,
+    })
+    
+    -- Walk Speed Slider
+    MainTab:CreateSlider({
+        Name = "Walk Speed (No Ball)",
+        Range = {10, 30},
+        Increment = 1,
+        Suffix = "studs",
+        CurrentValue = speedSettings.WalkSpeed,
+        Flag = "WalkSpeed",
+        Callback = function(Value)
+            speedSettings.WalkSpeed = Value
+            applySpeedSettings()
+        end,
+    })
+
+    -- Apply speed settings function
+    function applySpeedSettings()
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                -- Check if player has ball (you'll need to adjust this based on your game's mechanics)
+                local hasBall = --[[ Add your ball detection logic here ]]
+                
+                if hasBall then
+                    humanoid.WalkSpeed = speedSettings.DribbleSpeed
+                else
+                    humanoid.WalkSpeed = speedSettings.WalkSpeed
+                end
             end
         end
-    end,
-})
+    end
 
--- Auto Timer (Bronze quick draw)
-MainTab:CreateToggle({
-    Name = "Auto Timer (Bronze quick draw)",
-    CurrentValue = false,
-    Flag = "AT1_Toggle",
-    Callback = function(Value)
-        _G.ShootingEnabled = Value
-        
-        if Value and not loadedScripts.BronzeQuickDraw then
-            local success, err = pcall(function()
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/kosta5630/RH2/refs/heads/main/Auto%20Timer%20Bronze%20QD", true))()
-                loadedScripts.BronzeQuickDraw = true
-            end)
-            
-            if not success then
-                warn("Failed to load Bronze Quick Draw script: "..tostring(err))
-                Rayfield:Notify({
-                    Title = "Script Error",
-                    Content = "Failed to load Bronze Quick Draw timer",
-                    Duration = 6.5,
-                    Actions = {
-                        Ignore = {
-                            Name = "Okay",
-                            Callback = function() end
-                        }
-                    }
-                })
+    -- Monitor ball possession and adjust speed
+    local function monitorBallPossession()
+        while task.wait(0.1) do
+            if speedSettings then
+                applySpeedSettings()
             end
         end
-    end,
-})
+    end
 
--- Cleanup when GUI is closed
-game:GetService("UserInputService").WindowFocusReleased:Connect(function()
+    task.spawn(monitorBallPossession)
+
+    -- Miscellaneous Tab
+    local MiscTab = Window:CreateTab("Miscellaneous", nil)
+    MiscTab:CreateSection("Utilities")
+
+    MiscTab:CreateButton({
+        Name = "Join Discord",
+        Callback = function()
+            local http = game:GetService("HttpService")
+            local discordInvite = "GYH92be25Z"
+            pcall(function()
+                http:GetAsync("http://127.0.0.1:6463/rpc?v=1", true)
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Discord",
+                    Text = "Joining Discord server...",
+                    Duration = 3
+                })
+                task.wait(1)
+                http:RequestAsync({
+                    Url = "http://127.0.0.1:6463/rpc?v=1",
+                    Method = "POST",
+                    Headers = {
+                        ["Content-Type"] = "application/json",
+                        ["Origin"] = "https://discord.com"
+                    },
+                    Body = http:JSONEncode({
+                        cmd = "INVITE_BROWSER",
+                        args = {
+                            code = discordInvite
+                        },
+                        nonce = http:GenerateGUID(false)
+                    })
+                })
+            end)
+        end
+    })
+end
+
+-- Initialize the UI
+setupUI()
+
+-- Cleanup function
+local function cleanup()
     if Window then
-        _G.ShootingEnabled = false
+        Window:Destroy()
+    end
+    _G.ShootingEnabled = false
+end
+
+-- Connect cleanup to game closing
+game:GetService("Players").LocalPlayer.PlayerGui.ChildRemoved:Connect(function(child)
+    if child.Name == "Rayfield" then
+        cleanup()
     end
 end)
